@@ -145,7 +145,7 @@ func (c *client) authenticateUser() error {
 	}
 	// Poll for the email field with a timeout — WaitLoad hangs because the page
 	// load event already fired during WAF handling inside navigateAndValidateResponse.
-	emailField, err := tab.Timeout(10 * time.Second).Element("#ap_email")
+	emailField, err := tab.Timeout(30 * time.Second).Element("#ap_email")
 	if err != nil {
 		return fmt.Errorf("failure finding email field: %w", err)
 	}
@@ -635,6 +635,9 @@ func (c *client) handleWafChallenge(tab *rod.Page) error {
 		}
 		if !hasChallenge {
 			c.logger.Info("waf challenge completed successfully")
+			// WAF reload triggered a new navigation — wait for it to settle
+			// before the caller looks for page elements.
+			_ = tab.WaitLoad()
 			return nil
 		}
 		if attempt == maxRetries {
