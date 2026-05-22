@@ -6,6 +6,9 @@ on:
   schedule:
   - cron: "0 */12 * * *"
   workflow_dispatch:
+concurrency:
+  group: sync
+  cancel-in-progress: true
 env:
   ITS_IMDB_AUTH: ${{ secrets.IMDB_AUTH }}
   ITS_IMDB_EMAIL: ${{ secrets.IMDB_EMAIL }}
@@ -46,7 +49,9 @@ jobs:
       uses: actions/setup-go@v6
       with:
         go-version: 1.25.1
+        cache: true
     - name: Build
       run: make build
     - name: Sync
+      timeout-minutes: 5
       run: make sync
