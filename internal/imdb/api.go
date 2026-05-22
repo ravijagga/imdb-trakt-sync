@@ -143,13 +143,9 @@ func (c *client) authenticateUser() error {
 	if err != nil {
 		return fmt.Errorf("failure navigating and validating response: %w", err)
 	}
-	// Wait for the Amazon login form to fully render after any WAF redirect.
-	// WaitStable hangs here because the Amazon login page never stops mutating
-	// its DOM; WaitLoad resolves on the page load event instead.
-	if err = tab.WaitLoad(); err != nil {
-		return fmt.Errorf("failure waiting for login page to load: %w", err)
-	}
-	emailField, err := tab.Element("#ap_email")
+	// Poll for the email field with a timeout — WaitLoad hangs because the page
+	// load event already fired during WAF handling inside navigateAndValidateResponse.
+	emailField, err := tab.Timeout(10 * time.Second).Element("#ap_email")
 	if err != nil {
 		return fmt.Errorf("failure finding email field: %w", err)
 	}
